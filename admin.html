@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Διαχείριση · Πού Παίζει</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:920px;margin:0 auto;padding:24px 16px;color:#1b1d26;background:#f3f1ec;line-height:1.45}
+h1{margin:0 0 4px} h2{margin:28px 0 10px;font-size:19px}
+p.help{color:#5d6070;margin:0 0 16px}
+input,select,button{font:inherit;padding:8px 10px;border:1px solid #cfcac0;border-radius:8px;background:#fff;color:inherit}
+button{background:#c2410c;color:#fff;border:0;cursor:pointer;font-weight:600}
+button.sec{background:#5d6070}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{background:#fbe6d8;padding:10px 14px;border-radius:8px;margin:12px 0}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px}
+td,th{padding:8px;border-bottom:1px solid #eee;text-align:left;vertical-align:middle;font-size:14px}
+img{width:46px;border-radius:4px;display:block}
+textarea{width:100%;box-sizing:border-box;min-height:160px;font:12px ui-monospace,monospace;padding:10px;border:1px solid #cfcac0;border-radius:8px}
+ol{padding-left:20px}
+</style></head><body>
+<h1>Ελληνικές πλατφόρμες</h1>
+<p class="help">Ψάξε έναν τίτλο, αντιστοίχισέ τον σε πλατφόρμα και στο τέλος αποθήκευσε το αρχείο στο GitHub.</p>
+<div id="msg" class="msg" hidden></div>
+
+<h2>1. Βρες τίτλο</h2>
+<form id="sf" class="row">
+  <select id="kind"><option value="tv">Σειρά</option><option value="movie">Ταινία</option></select>
+  <input id="q" placeholder="π.χ. Η Γη της Ελιάς" size="30">
+  <button>Αναζήτηση</button>
+</form>
+<div class="wrap"><table id="res"></table></div>
+
+<h2>Καταχωρισμένοι τίτλοι (<span id="count">0</span>)</h2>
+<div class="wrap"><table id="list"></table></div>
+
+<h2>2. Αποθήκευση στο GitHub</h2>
+<ol>
+  <li>Πάτα «Αντιγραφή».</li>
+  <li>Πάτα «Άνοιγμα στο GitHub», σβήσε όλο το περιεχόμενο του αρχείου και επικόλλησε.</li>
+  <li>Πάτα «Commit changes». Σε 1–2 λεπτά οι αλλαγές φαίνονται στο site.</li>
+</ol>
+<div class="row" style="margin-bottom:10px">
+  <button id="copy" type="button">Αντιγραφή</button>
+  <a id="edit" href="#" target="_blank" rel="noopener"><button class="sec" type="button">Άνοιγμα στο GitHub</button></a>
+</div>
+<textarea id="out" readonly aria-label="Περιεχόμενο greek-platforms.json"></textarea>
+
+<script>
+/* ===== Ρυθμίσεις: ίδια διεύθυνση Worker με το index.html ===== */
+const PROXY_URL = "https://ΒΑΛΕ-ΤΟ-WORKER.workers.dev/";
+const GITHUB_EDIT_URL = "https://github.com/ΧΡΗΣΤΗΣ/REPO/edit/main/greek-platforms.json";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let DATA = {platforms:[], titles:[]};
+$("#edit").href = GITHUB_EDIT_URL;
+
+function say(t){ const m=$("#msg"); m.textContent=t; m.hidden=!t; }
+async function tmdb(path, params={}){
+  const r = await fetch(PROXY_URL + "?" + new URLSearchParams({...params, path}));
+  if(!r.ok) throw new Error("HTTP "+r.status);
+  return r.json();
+}
+function platformName(id){ return (DATA.platforms.find(p=>p.id===id)||{}).name || id; }
+function render(){
+  $("#count").textContent = DATA.titles.length;
+  $("#list").innerHTML = DATA.titles.length
+    ? "<tr><th>Τίτλος</th><th>Είδος</th><th>Πλατφόρμα</th><th>Link</th><th></th></tr>" +
+      DATA.titles.map((t,i)=>`<tr><td>${esc(t.title)}</td><td>${t.kind==="tv"?"Σειρά":"Ταινία"}</td><td>${esc(platformName(t.platform))}</td><td>${t.url?`<a href="${esc(t.url)}" target="_blank" rel="noopener">άνοιγμα</a>`:"—"}</td><td><button class="sec" data-del="${i}">Διαγραφή</button></td></tr>`).join("")
+    : "<tr><td>Δεν έχεις προσθέσει ακόμα τίτλους.</td></tr>";
+  $("#out").value = JSON.stringify(DATA, null, 2);
+}
+
+fetch("greek-platforms.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{DATA={platforms:d.platforms||[],titles:d.titles||[]};render();})
+  .catch(()=>say("Δεν φόρτωσε το greek-platforms.json."));
+
+$("#sf").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const q=$("#q").value.trim(), kind=$("#kind").value; if(!q) return;
+  $("#res").innerHTML="<tr><td>Αναζήτηση…</td></tr>";
+  try{
+    const d = await tmdb(`search/${kind}`,{query:q,language:"el-GR"});
+    const rows = (d.results||[]).slice(0,10);
+    const opts = DATA.platforms.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+    $("#res").innerHTML = rows.length ? rows.map(r=>{
+      const title=r.title||r.name||"", year=(r.release_date||r.first_air_date||"").slice(0,4);
+      return `<tr data-id="${r.id}" data-kind="${kind}" data-title="${esc(title)}">
+        <td>${r.poster_path?`<img src="https://image.tmdb.org/t/p/w92${esc(r.poster_path)}" alt="">`:""}</td>
+        <td><strong>${esc(title)}</strong> ${esc(year)}<br><small>TMDB #${r.id}</small></td>
+        <td class="row"><select>${opts}</select><input placeholder="Link σειράς (προαιρετικό)" size="24"><button data-add>Προσθήκη</button></td></tr>`;
+    }).join("") : "<tr><td>Δεν βρέθηκε τίτλος.</td></tr>";
+  }catch(err){
+    $("#res").innerHTML="<tr><td>Η αναζήτηση απέτυχε. Έλεγξε ότι το PROXY_URL δείχνει στον Cloudflare Worker.</td></tr>";
+  }
+});
+
+document.addEventListener("click", e=>{
+  const add = e.target.closest("[data-add]");
+  if(add){
+    const tr = add.closest("tr"), id=Number(tr.dataset.id), kind=tr.dataset.kind, pl=tr.querySelector("select").value;
+    if(DATA.titles.some(t=>t.kind===kind && t.tmdb_id===id && t.platform===pl)){ say("Υπάρχει ήδη αυτή η αντιστοίχιση."); return; }
+    DATA.titles.push({kind, tmdb_id:id, platform:pl, title:tr.dataset.title, url:tr.querySelector("input").value.trim(), added:new Date().toISOString().slice(0,10)});
+    say(`Προστέθηκε: ${tr.dataset.title} → ${platformName(pl)}. Μην ξεχάσεις την αποθήκευση στο GitHub.`);
+    render();
+  }
+  const del = e.target.closest("[data-del]");
+  if(del){ const t=DATA.titles.splice(Number(del.dataset.del),1)[0]; say(`Διαγράφηκε: ${t.title}. Μην ξεχάσεις την αποθήκευση στο GitHub.`); render(); }
+});
+
+$("#copy").addEventListener("click", async ()=>{
+  try{ await navigator.clipboard.writeText($("#out").value); say("Αντιγράφηκε. Τώρα άνοιξε το αρχείο στο GitHub και επικόλλησε."); }
+  catch(e){ $("#out").select(); say("Πάτα Ctrl+C (ή Cmd+C) για αντιγραφή."); }
+});
+</script>
+</body></html>

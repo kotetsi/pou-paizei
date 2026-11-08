@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Βρες σε ποια πλατφόρμα streaming παίζει κάθε ταινία και σειρά στην Ελλάδα.">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Πού Παίζει</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;700;900&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one column — header, two tabs (search by title / browse by platform), results below */
+:root{
+  --bg:#f3f1ec; --surface:#ffffff; --fg:#1b1d26; --muted:#5d6070; --line:#dcd8cf;
+  --accent:#c2410c; --accent-soft:#fbe6d8; --chip:#ece9e2;
+  --display:"Commissioner",system-ui,sans-serif;
+  --body:"Commissioner",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#13141b; --surface:#1c1e28; --fg:#ecebe6; --muted:#a2a3b0; --line:#2e3040;
+  --accent:#f59e5b; --accent-soft:#3a2416; --chip:#262836; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13141b; --surface:#1c1e28; --fg:#ecebe6; --muted:#a2a3b0; --line:#2e3040;
+  --accent:#f59e5b; --accent-soft:#3a2416; --chip:#262836; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding-block:40px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-direction:column;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(34px,7vw,52px);line-height:1.02;margin:0;text-wrap:balance;letter-spacing:-.02em}
+.lead{color:var(--muted);margin:0;max-width:60ch}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);flex-wrap:wrap;align-items:flex-end}
+.kind{display:inline-flex;margin-left:auto;margin-bottom:8px;background:var(--chip);border-radius:999px;padding:3px}
+.kind button{font:inherit;font-size:14px;font-weight:700;border:0;border-radius:999px;padding:6px 14px;background:none;color:var(--muted);cursor:pointer}
+.kind button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.tab{font:inherit;font-weight:700;background:none;border:0;padding:10px 14px;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
+form{display:flex;gap:8px}
+input[type=search]{flex:1;min-width:0;font:inherit;font-size:18px;padding:14px 16px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.go{font:inherit;font-weight:700;border:0;border-radius:10px;padding:0 20px;background:var(--accent);color:var(--bg);cursor:pointer}
+.status{font-size:14px;color:var(--muted);min-height:1.5em}
+.notice{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:14px}
+.results{display:flex;flex-direction:column;gap:16px}
+.card{display:grid;grid-template-columns:92px 1fr;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
+.poster{width:100%;aspect-ratio:2/3;max-width:100%;border-radius:6px;background:var(--chip);object-fit:cover;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:900;font-size:28px;color:var(--muted)}
+.info{min-width:0;display:flex;flex-direction:column;gap:10px}
+.title{font-family:var(--display);font-weight:700;font-size:20px;line-height:1.2;margin:0}
+.year{font-family:var(--mono);font-size:13px;color:var(--muted);font-weight:500;margin-left:6px}
+.group{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.glabel{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:100%}
+.prov{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:4px 10px 4px 4px;font-size:14px;font-weight:500;color:var(--fg)}
+.prov img,.prov .dot{width:24px;height:24px;border-radius:6px;background:var(--line)}
+.prov.sub{background:var(--accent-soft)}
+a.prov{text-decoration:none}
+.prov small{color:var(--muted);font-weight:400}
+button.prov{font:inherit;font-size:14px;font-weight:500;border:2px solid transparent;cursor:pointer}
+button.prov[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.platforms{display:flex;flex-wrap:wrap;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px}
+.tile{display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .t{font-weight:700;font-size:14px;line-height:1.25}
+.tile .y{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.none{font-size:14px;color:var(--muted)}
+.more{font-size:13px;color:var(--accent)}
+h2.sec{font-family:var(--display);font-size:22px;margin:0}
+.trailer{font:inherit;font-size:13px;font-weight:700;border:0;border-radius:999px;padding:6px 12px;background:var(--fg);color:var(--bg);cursor:pointer;align-self:flex-start;display:inline-flex;align-items:center;gap:6px}
+.trailer::before{content:"";width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+dialog{border:0;border-radius:14px;padding:0;background:var(--surface);color:var(--fg);width:min(900px,calc(100vw - 32px));max-width:100%}
+dialog::backdrop{background:rgba(10,10,15,.75)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px}
+.dlg-head h3{margin:0;font-family:var(--display);font-size:17px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dlg-close{font:inherit;font-weight:700;border:0;background:var(--chip);color:var(--fg);border-radius:8px;padding:6px 12px;cursor:pointer}
+.player{aspect-ratio:16/9;width:100%;max-width:100%;background:#000;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:14px}
+.player iframe{width:100%;height:100%;border:0}
+.dlg-foot{padding:10px 16px 14px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap}
+.dlg-foot a{color:var(--accent)}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:420px){.card{grid-template-columns:64px 1fr}.poster{font-size:20px}.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Streaming στην Ελλάδα</span>
+    <h1>Πού παίζει;</h1>
+    <p class="lead">Ψάξε ταινία ή σειρά για να δεις σε ποια πλατφόρμα θα τη βρεις, ή διάλεξε πλατφόρμα για να δεις τι έχει.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-search" aria-selected="true" aria-controls="view-search">Αναζήτηση</button>
+    <button class="tab" role="tab" id="tab-plat" aria-selected="false" aria-controls="view-plat">Ανά πλατφόρμα</button>
+    <div class="kind" role="group" aria-label="Είδος">
+      <button id="k-movie" aria-pressed="true">Ταινίες</button>
+      <button id="k-tv" aria-pressed="false">Σειρές</button>
+    </div>
+  </div>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <section id="view-search" role="tabpanel" aria-labelledby="tab-search" style="display:flex;flex-direction:column;gap:16px">
+    <form id="f" role="search">
+      <input id="q" type="search" placeholder="π.χ. Oppenheimer" aria-label="Τίτλος" autocomplete="off">
+      <button class="go" type="submit">Αναζήτηση</button>
+    </form>
+    <div id="status" class="status" aria-live="polite"></div>
+    <div id="results" class="results"></div>
+  </section>
+
+  <section id="view-plat" role="tabpanel" aria-labelledby="tab-plat" hidden style="flex-direction:column;gap:16px">
+    <div id="platforms" class="platforms" aria-label="Πλατφόρμες"></div>
+    <div id="pstatus" class="status" aria-live="polite"></div>
+    <div id="pgrid" class="grid"></div>
+  </section>
+
+  <dialog id="dlg" aria-labelledby="dlg-title">
+    <div class="dlg-head"><h3 id="dlg-title">Τρέιλερ</h3><button class="dlg-close" id="dlg-close">Κλείσιμο</button></div>
+    <div class="player" id="player">Φόρτωση…</div>
+    <div class="dlg-foot" id="dlg-foot"></div>
+  </dialog>
+
+  <footer>
+    <span>Δεδομένα διαθεσιμότητας από JustWatch. Στοιχεία ταινιών από TMDB.</span>
+    <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+  </footer>
+</div>
+
+<script>
+/* ===== Ρυθμίσεις ===== */
+const REGION = "GR";
+const LANG = "el-GR";
+const PROXY_URL = "https://ΒΑΛΕ-ΤΟ-WORKER.workers.dev/";   // η διεύθυνση του Cloudflare Worker
+const IMG = "https://image.tmdb.org/t/p/";
+const MAX_PLATFORMS = 24;
+
+/* Λέξεις ανά είδος */
+const K = {
+  movie:{one:"ταινία", many:"ταινίες", none:"Δεν είναι διαθέσιμη", ex:"Oppenheimer"},
+  tv:   {one:"σειρά",  many:"σειρές",  none:"Δεν είναι διαθέσιμη", ex:"The Last of Us"}
+};
+let kind = "movie";
+
+/* Ελληνικές πλατφόρμες: έρχονται από το greek-platforms.json (το συμπληρώνεις από το admin.php) */
+let GREEK = {platforms:[], titles:[]};
+const greekReady = fetch("greek-platforms.json",{cache:"no-store"})
+  .then(r=>r.ok?r.json():null).then(d=>{ if(d && Array.isArray(d.platforms)) GREEK = {platforms:d.platforms, titles:d.titles||[]}; })
+  .catch(()=>{});
+const TYPE_LABEL = {free:"δωρεάν", flatrate:"συνδρομή", ads:"δωρεάν"};
+function greekFor(k,id){
+  return GREEK.titles.filter(t=>t.kind===k && Number(t.tmdb_id)===Number(id))
+    .map(t=>{const p=GREEK.platforms.find(x=>x.id===t.platform); return p ? {...p, link:t.url||p.url} : null;})
+    .filter(Boolean);
+}
+function greekChip(p){
+  const inner = `<span class="dot"></span>${esc(p.name)} <small>· ${TYPE_LABEL[p.type]||""}</small>`;
+  return p.link
+    ? `<a class="prov sub" href="${esc(p.link)}" target="_blank" rel="noopener">${inner}</a>`
+    : `<span class="prov sub">${inner}</span>`;
+}
+
+/* Ενδεικτικά δεδομένα για όταν δεν υπάρχει σύνδεση με το TMDB (π.χ. στην προεπισκόπηση) */
+const DEMO = {
+  movie:[
+    {title:"Παράδειγμα: Oppenheimer",year:"2023",providers:{flatrate:["Prime Video"],rent:["Apple TV"],buy:["Apple TV","Google Play"]}},
+    {title:"Παράδειγμα: Barbie",year:"2023",providers:{flatrate:["HBO Max"],rent:["Apple TV"]}},
+    {title:"Παράδειγμα: Dune: Part Two",year:"2024",providers:{rent:["Apple TV","Google Play"],buy:["Apple TV"]}}
+  ],
+  tv:[
+    {title:"Παράδειγμα: The Last of Us",year:"2023",providers:{flatrate:["HBO Max"]}},
+    {title:"Παράδειγμα: Stranger Things",year:"2016",providers:{flatrate:["Netflix"]}},
+    {title:"Παράδειγμα: The Bear",year:"2022",providers:{flatrate:["Disney Plus"]}}
+  ]
+};
+const DEMO_PLATFORMS = ["Netflix","Amazon Prime Video","Apple TV","Disney Plus","HBO Max","MUBI","Cinobo","Crunchyroll"].map((n,i)=>({provider_id:i,provider_name:n}));
+const DEMO_MSG = "Δεν υπάρχει σύνδεση με τη βάση ταινιών, οπότε βλέπεις ενδεικτικά δεδομένα, όχι πραγματική διαθεσιμότητα. Όταν συνδεθεί ο Cloudflare Worker, δουλεύει κανονικά.";
+
+const $ = s => document.querySelector(s);
+const GROUPS = [["flatrate","Συνδρομή"],["free","Δωρεάν"],["ads","Δωρεάν με διαφημίσεις"],["rent","Ενοικίαση"],["buy","Αγορά"]];
+
+async function tmdb(path, params={}){
+  const qs = new URLSearchParams({...params, path});
+  const r = await fetch(PROXY_URL + "?" + qs.toString());
+  if(!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+/* Οι ταινίες έχουν title/release_date, οι σειρές name/first_air_date */
+function norm(m){return {...m, title:m.title||m.name||"", year:(m.release_date||m.first_air_date||"").slice(0,4)}}
+function demoNotice(){const n=$("#notice");n.textContent=DEMO_MSG;n.hidden=false;}
+function logo(p){return p.logo_path?`<img src="${IMG}w92${p.logo_path}" alt="" loading="lazy">`:`<span class="dot"></span>`}
+function poster(m){
+  return m.poster_path
+    ? `<img class="poster" src="${IMG}w185${m.poster_path}" alt="Αφίσα: ${esc(m.title)}" loading="lazy">`
+    : `<div class="poster" aria-hidden="true">${esc((m.title||"?").replace("Παράδειγμα: ","")[0])}</div>`;
+}
+
+/* ===== Αναζήτηση ===== */
+function provChip(p, sub){
+  const o = typeof p==="string" ? {provider_name:p} : p;
+  return `<span class="prov${sub?" sub":""}">${logo(o)}${esc(o.provider_name)}</span>`;
+}
+function card(m, prov, link){
+  let groups = "";
+  if(prov){
+    for(const [k,label] of GROUPS){
+      const list = prov[k]; if(!list || !list.length) continue;
+      groups += `<div class="group"><span class="glabel">${label}</span>${list.map(p=>provChip(p,k==="flatrate")).join("")}</div>`;
+    }
+  }
+  const greek = m.id!=null ? greekFor(kind, m.id) : [];
+  if(greek.length) groups = `<div class="group"><span class="glabel">Ελληνικές πλατφόρμες</span>${greek.map(greekChip).join("")}</div>` + groups;
+  if(!groups) groups = `<span class="none">${K[kind].none} σε καμία πλατφόρμα στην Ελλάδα αυτή τη στιγμή.</span>`;
+  const more = link ? `<a class="more" href="${esc(link)}" target="_blank" rel="noopener">Όλες οι επιλογές στο JustWatch →</a>` : "";
+  return `<article class="card">${poster(m)}<div class="info"><h2 class="title">${esc(m.title)}<span class="year">${esc(m.year||"")}</span></h2>${trailerBtn(m)}${groups}${more}</div></article>`;
+}
+async function search(q){
+  const k = kind;
+  $("#status").textContent = "Αναζήτηση…";
+  $("#results").innerHTML = "";
+  try{
+    await greekReady;
+    const data = await tmdb(`search/${k}`,{query:q,language:LANG});
+    const items = (data.results||[]).slice(0,8).map(norm);
+    if(k!==kind) return;
+    if(!items.length){ $("#status").textContent = `Δεν βρέθηκε ${K[k].one} με τίτλο «${q}». Δοκίμασε τον αγγλικό ή τον ελληνικό τίτλο.`; return; }
+    const provs = await Promise.all(items.map(m=>tmdb(`${k}/${m.id}/watch/providers`).catch(()=>null)));
+    if(k!==kind) return;
+    $("#notice").hidden = true;
+    $("#results").innerHTML = items.map((m,i)=>{
+      const gr = provs[i]?.results?.[REGION];
+      return card(m, gr, gr?.link);
+    }).join("");
+    $("#status").textContent = `${items.length} ${K[k].many} για «${q}»`;
+  }catch(e){
+    $("#status").textContent = "";
+    demoNotice();
+    $("#results").innerHTML = DEMO[k].map(d=>card({title:d.title,year:d.year},d.providers,null)).join("");
+  }
+}
+$("#f").addEventListener("submit",e=>{e.preventDefault();const q=$("#q").value.trim();if(q)search(q);});
+
+/* ===== Ανά πλατφόρμα ===== */
+let platformsFor = null, demoMode = false, currentPlatformId = null;
+async function loadPlatforms(){
+  if(platformsFor===kind) return;
+  const k = platformsFor = kind;
+  $("#pstatus").textContent = "Φόρτωση πλατφορμών…";
+  $("#pgrid").innerHTML = "";
+  let list;
+  try{
+    const d = await tmdb(`watch/providers/${k}`,{watch_region:REGION,language:LANG});
+    list = (d.results||[])
+      .sort((a,b)=>(a.display_priorities?.[REGION]??999)-(b.display_priorities?.[REGION]??999))
+      .slice(0,MAX_PLATFORMS);
+    $("#notice").hidden = true; demoMode = false;
+  }catch(e){
+    demoMode = true; demoNotice(); list = DEMO_PLATFORMS;
+  }
+  await greekReady;
+  if(k!==kind) return;
+  const btn = p=>`<button class="prov" aria-pressed="false" data-id="${p.provider_id}" data-name="${esc(p.provider_name)}">${logo(p)}${esc(p.provider_name)}</button>`;
+  const local = GREEK.platforms.map(p=>`<button class="prov" aria-pressed="false" data-id="gr-${esc(p.id)}" data-local="${esc(p.id)}" data-name="${esc(p.name)}"><span class="dot"></span>${esc(p.name)}</button>`);
+  $("#platforms").innerHTML = `<span class="glabel">Διεθνείς πλατφόρμες</span>` + list.map(btn).join("")
+    + (local.length ? `<span class="glabel" style="margin-top:8px">Ελληνικές πλατφόρμες</span>` + local.join("") : "");
+  const keep = currentPlatformId && $(`#platforms button[data-id="${currentPlatformId}"]`);
+  const first = keep || $("#platforms button");
+  if(first) pickPlatform(first);
+}
+async function pickPlatform(btn){
+  const k = kind;
+  currentPlatformId = btn.dataset.id;
+  document.querySelectorAll("#platforms button").forEach(b=>b.setAttribute("aria-pressed", b===btn?"true":"false"));
+  const name = btn.dataset.name;
+  $("#pstatus").textContent = `Φόρτωση για ${name}…`;
+  $("#pgrid").innerHTML = "";
+  if(btn.dataset.local){ return pickLocal(btn.dataset.local, name, k); }
+  if(demoMode){
+    $("#pgrid").innerHTML = [1,2,3,4,5,6].map(n=>tile({title:`Παράδειγμα: ${K[k].one} ${n}`})).join("");
+    $("#pstatus").textContent = `Ενδεικτικά: δημοφιλείς ${K[k].many} στο ${name}`;
+    return;
+  }
+  try{
+    const d = await tmdb(`discover/${k}`,{
+      watch_region:REGION, with_watch_providers:btn.dataset.id,
+      with_watch_monetization_types:"flatrate|free|ads",
+      sort_by:"popularity.desc", language:LANG, page:1
+    });
+    if(k!==kind) return;
+    const items = (d.results||[]).map(norm);
+    $("#pgrid").innerHTML = items.map(tile).join("");
+    $("#pstatus").textContent = items.length
+      ? `Δημοφιλείς ${K[k].many} στο ${name} (${d.total_results.toLocaleString("el-GR")} συνολικά)`
+      : `Δεν βρέθηκαν ${K[k].many} στο ${name} με συνδρομή ή δωρεάν προβολή.`;
+  }catch(e){
+    $("#pstatus").textContent = "Δεν φόρτωσαν τα αποτελέσματα. Δοκίμασε ξανά σε λίγο.";
+  }
+}
+async function pickLocal(pid, name, k){
+  const items = GREEK.titles.filter(t=>t.platform===pid && t.kind===k).slice(0,40);
+  if(!items.length){
+    $("#pstatus").textContent = `Δεν έχουν προστεθεί ακόμα ${K[k].many} για το ${name}.`;
+    return;
+  }
+  const details = await Promise.all(items.map(t=>tmdb(`${k}/${t.tmdb_id}`,{language:LANG}).then(norm).catch(()=>({title:t.title}))));
+  if(k!==kind) return;
+  $("#pgrid").innerHTML = details.map(tile).join("");
+  $("#pstatus").textContent = `${K[k].many.charAt(0).toUpperCase()+K[k].many.slice(1)} στο ${name} (${items.length})`;
+}
+function tile(m){return `<div class="tile">${poster(m)}<span class="t">${esc(m.title)}</span><span class="y">${esc(m.year||"")}</span>${trailerBtn(m)}</div>`}
+
+/* ===== Τρέιλερ από YouTube (μέσω TMDB) ===== */
+function trailerBtn(m){
+  return `<button class="trailer" data-k="${kind}" data-id="${m.id??""}" data-title="${esc((m.title||"").replace("Παράδειγμα: ",""))}" data-year="${esc(m.year||"")}">Τρέιλερ</button>`;
+}
+function pickTrailer(list){
+  const yt = (list||[]).filter(v=>v.site==="YouTube");
+  const score = v => (v.type==="Trailer"?4:v.type==="Teaser"?2:0) + (v.iso_639_1==="el"?3:0) + (v.official?1:0);
+  return yt.sort((a,b)=>score(b)-score(a) || (b.published_at||"").localeCompare(a.published_at||""))[0] || null;
+}
+async function openTrailer(b){
+  const {k,id,title,year} = b.dataset;
+  const dlg = $("#dlg");
+  $("#dlg-title").textContent = `${title} ${year?"("+year+")":""} · Τρέιλερ`;
+  $("#player").textContent = "Φόρτωση…";
+  const searchUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(`${title} ${year} trailer`);
+  $("#dlg-foot").innerHTML = `<a href="${searchUrl}" target="_blank" rel="noopener">Αναζήτηση στο YouTube →</a>`;
+  try{ dlg.showModal(); }catch(e){ dlg.setAttribute("open",""); }
+  let v = null;
+  if(id){
+    try{
+      const d = await tmdb(`${k}/${id}/videos`,{language:LANG, include_video_language:"el,en,null"});
+      v = pickTrailer(d.results);
+    }catch(e){}
+  }
+  if(!dlg.open) return;
+  if(!v){
+    $("#player").textContent = "Δεν βρέθηκε επίσημο τρέιλερ. Δοκίμασε την αναζήτηση στο YouTube.";
+    return;
+  }
+  const key = encodeURIComponent(v.key);
+  $("#player").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${key}?autoplay=1&rel=0" title="${esc(v.name)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  $("#dlg-foot").innerHTML = `<a href="https://www.youtube.com/watch?v=${key}" target="_blank" rel="noopener">Άνοιγμα στο YouTube →</a><span>${v.iso_639_1==="el"?"Ελληνικό τρέιλερ":""}</span>`;
+}
+function closeTrailer(){ const dlg=$("#dlg"); $("#player").innerHTML=""; if(dlg.open) dlg.close(); }
+document.addEventListener("click",e=>{const b=e.target.closest("button.trailer"); if(b) openTrailer(b);});
+$("#dlg-close").addEventListener("click",closeTrailer);
+$("#dlg").addEventListener("close",()=>{$("#player").innerHTML="";});
+$("#dlg").addEventListener("click",e=>{ if(e.target.id==="dlg") closeTrailer(); });
+$("#platforms").addEventListener("click",e=>{const b=e.target.closest("button.prov");if(b)pickPlatform(b);});
+
+/* ===== Καρτέλες και είδος ===== */
+let view = "search";
+function show(which){
+  view = which;
+  const s = which==="search";
+  $("#tab-search").setAttribute("aria-selected",s); $("#tab-plat").setAttribute("aria-selected",!s);
+  $("#view-search").hidden = !s; $("#view-plat").hidden = s;
+  $("#view-plat").style.display = s ? "" : "flex";
+  if(!s) loadPlatforms();
+}
+function setKind(k){
+  if(k===kind) return;
+  kind = k;
+  $("#k-movie").setAttribute("aria-pressed",k==="movie");
+  $("#k-tv").setAttribute("aria-pressed",k==="tv");
+  $("#q").placeholder = "π.χ. " + K[k].ex;
+  const q = $("#q").value.trim();
+  if(q) search(q); else { $("#results").innerHTML=""; $("#status").textContent=""; search(K[k].ex); }
+  if(view==="plat") loadPlatforms(); else platformsFor = null;
+}
+$("#tab-search").addEventListener("click",()=>show("search"));
+$("#tab-plat").addEventListener("click",()=>show("plat"));
+$("#k-movie").addEventListener("click",()=>setKind("movie"));
+$("#k-tv").addEventListener("click",()=>setKind("tv"));
+
+search(K.movie.ex);
+</script>
+
+</html>

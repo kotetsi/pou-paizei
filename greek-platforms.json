@@ -1,0 +1,14 @@
+{
+  "platforms": [
+    {"id": "ertflix",   "name": "ERTFLIX",     "type": "free",     "url": "https://www.ertflix.gr"},
+    {"id": "ant1plus",  "name": "ANT1+",       "type": "flatrate", "url": ""},
+    {"id": "ant1next",  "name": "ANT1 Next",   "type": "free",     "url": ""},
+    {"id": "megaplay",  "name": "Mega Play",   "type": "free",     "url": ""},
+    {"id": "star",      "name": "Star",        "type": "free",     "url": ""},
+    {"id": "alpha",     "name": "Alpha",       "type": "free",     "url": ""},
+    {"id": "cosmotetv", "name": "Cosmote TV",  "type": "flatrate", "url": "https://www.cosmotetv.gr"},
+    {"id": "nova",      "name": "Nova",        "type": "flatrate", "url": "https://www.nova.gr"},
+    {"id": "vodafonetv","name": "Vodafone TV", "type": "flatrate", "url": ""}
+  ],
+  "titles": []
+}
