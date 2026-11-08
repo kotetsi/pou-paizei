@@ -1,0 +1,10 @@
+# Ρυθμίσεις για την αυτόματη ενημέρωση του Cloudflare Worker από το GitHub (Workers Builds).
+# Τα Secrets TMDB_TOKEN και OMDB_API_KEY ρυθμίζονται μόνο στο Cloudflare, ποτέ εδώ.
+name = "pou-paizei-api"
+main = "worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+keep_vars = true
+
+[observability]
+enabled = true

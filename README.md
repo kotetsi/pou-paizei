@@ -23,7 +23,7 @@ Site που δείχνει σε ποια πλατφόρμα streaming παίζε
 1. Απόκτησε κλειδί από [OMDb API key](https://www.omdbapi.com/apikey.aspx) και ενεργοποίησέ το από το μήνυμα email τους. Έλεγξε τα τρέχοντα όρια και τους όρους του παρόχου πριν επιλέξεις πλάνο.
 2. Στο Cloudflare, άνοιξε **Workers & Pages → pou-paizei-api → Settings → Variables and Secrets → Add**.
 3. Πρόσθεσε **Secret** με όνομα `OMDB_API_KEY` και τιμή το κλειδί. Διατήρησε το υπάρχον `TMDB_TOKEN`.
-4. Στο **Edit code**, αντικατάστησε τον Worker με το ενημερωμένο `worker.js` και κάνε **Deploy**. Η ενημέρωση στο GitHub Pages δεν ενημερώνει αυτόματα τον Cloudflare Worker.
+4. Ο Worker είναι συνδεδεμένος με το GitHub (Workers Builds, ρυθμίσεις στο `wrangler.toml`): κάθε αλλαγή στο `main` ενημερώνει αυτόματα και τον Worker στο Cloudflare.
 5. Ανέβασε/συγχώνευσε και τα `index.html` και `discover.js` στο branch που δημοσιεύει το GitHub Pages.
 6. Δοκίμασε «Τι να δούμε;» → IMDb → «Βρες ταινίες». Χωρίς το κλειδί ή χωρίς τον νέο Worker εμφανίζεται σαφές μήνυμα και παραμένει διαθέσιμη η ρητή επιλογή TMDB.
 
