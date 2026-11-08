@@ -40,7 +40,7 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(34px,7vw,52px);lin
 .tab[aria-selected="true"]{color:var(--fg);border-color:var(--accent)}
 form{display:flex;gap:8px}
 input[type=search]{flex:1;min-width:0;font:inherit;font-size:18px;padding:14px 16px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg)}
-input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .go{font:inherit;font-weight:700;border:0;border-radius:10px;padding:0 20px;background:var(--accent);color:var(--bg);cursor:pointer}
 .status{font-size:14px;color:var(--muted);min-height:1.5em}
 .notice{background:var(--accent-soft);border-radius:8px;padding:10px 14px;font-size:14px}
@@ -79,6 +79,19 @@ dialog::backdrop{background:rgba(10,10,15,.75)}
 .dlg-foot{padding:10px 16px 14px;font-size:13px;display:flex;gap:12px;flex-wrap:wrap}
 .dlg-foot a{color:var(--accent)}
 footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:4px}
+.discovery{display:flex;flex-direction:column;gap:16px}
+.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.filters label{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.filters input,.filters select{box-sizing:border-box;width:100%;min-width:0;font:inherit;padding:10px;border:2px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.filters .full{grid-column:1/-1}
+.filters .check{flex-direction:row;align-items:flex-start;font-weight:500}
+.filters .check input{width:auto;margin-top:6px}
+.discovery .go{padding:12px 20px;align-self:flex-start}
+.hint{font-size:14px;color:var(--muted);margin:0}
+.preset,.load-more{font:inherit;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;align-self:flex-start}
+button:disabled{opacity:.6;cursor:wait}
+.rating{font-family:var(--mono);font-size:13px;color:var(--accent);text-decoration:none}
+@media(max-width:540px){.kind{margin-left:0}.filters{gap:12px}.filters .full{grid-column:1/-1}.tab{padding:10px}}
 @media (max-width:420px){.card{grid-template-columns:64px 1fr}.poster{font-size:20px}.grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 
@@ -86,11 +99,12 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
   <header>
     <span class="eyebrow">Streaming στην Ελλάδα</span>
     <h1>Πού παίζει;</h1>
-    <p class="lead">Ψάξε ταινία ή σειρά για να δεις σε ποια πλατφόρμα θα τη βρεις, ή διάλεξε πλατφόρμα για να δεις τι έχει.</p>
+    <p class="lead">Ψάξε έναν τίτλο, βρες ταινία με τα κριτήριά σου ή διάλεξε πλατφόρμα για να δεις τι έχει στην Ελλάδα.</p>
   </header>
 
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-search" aria-selected="true" aria-controls="view-search">Αναζήτηση</button>
+    <button class="tab" role="tab" id="tab-discover" aria-selected="false" aria-controls="view-discover">Τι να δούμε;</button>
     <button class="tab" role="tab" id="tab-plat" aria-selected="false" aria-controls="view-plat">Ανά πλατφόρμα</button>
     <div class="kind" role="group" aria-label="Είδος">
       <button id="k-movie" aria-pressed="true">Ταινίες</button>
@@ -107,6 +121,40 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
     </form>
     <div id="status" class="status" aria-live="polite"></div>
     <div id="results" class="results"></div>
+  </section>
+
+  <section id="view-discover" class="discovery" role="tabpanel" aria-labelledby="tab-discover" hidden>
+    <h2 class="sec">Βρες ταινία για την παρέα σου</h2>
+    <p class="hint">Διάλεξε είδος, χρόνια και βαθμολογία. Θα δεις πού παίζεται κάθε ταινία στην Ελλάδα.</p>
+    <button id="d-preset" class="preset" type="button">Οικογενειακή · 2000 · IMDb πάνω από 7,5</button>
+    <form id="d-form" class="discovery">
+      <div class="filters">
+        <label class="full" for="d-genre">Είδος ταινίας
+          <select id="d-genre">
+            <option value="">Όλα τα είδη</option><option value="10751" selected>Οικογενειακή</option>
+            <option value="16">Κινούμενα σχέδια</option><option value="35">Κωμωδία</option>
+            <option value="12">Περιπέτεια</option><option value="14">Φαντασίας</option>
+            <option value="28">Δράση</option><option value="18">Δράμα</option>
+            <option value="878">Επιστημονική φαντασία</option><option value="9648">Μυστηρίου</option>
+            <option value="10749">Ρομαντική</option><option value="99">Ντοκιμαντέρ</option>
+            <option value="53">Θρίλερ</option><option value="27">Τρόμου</option>
+          </select>
+        </label>
+        <label for="d-from">Από έτος<input id="d-from" type="number" min="1874" max="2100" placeholder="π.χ. 2000"></label>
+        <label for="d-to">Έως έτος<input id="d-to" type="number" min="1874" max="2100" placeholder="π.χ. 2009"></label>
+        <p class="hint full">Για μία συγκεκριμένη χρονιά, βάλε το ίδιο έτος και στα δύο πεδία.</p>
+        <label for="d-source">Βαθμολογία από<select id="d-source"><option value="imdb">IMDb</option><option value="tmdb">TMDB</option></select></label>
+        <label for="d-rating">Πάνω από<input id="d-rating" type="text" inputmode="decimal" value="7,5" required aria-describedby="d-rating-hint"></label>
+        <p id="d-rating-hint" class="hint full">Κλίμακα 0–10. IMDb και TMDB έχουν διαφορετικές βαθμολογίες.</p>
+        <label class="full" for="d-access">Τρόπος προβολής<select id="d-access"><option value="all">Όλες οι επιλογές, μαζί με ενοικίαση / αγορά</option><option value="stream">Μόνο με συνδρομή ή δωρεάν</option><option value="free">Μόνο δωρεάν (και με διαφημίσεις)</option></select></label>
+        <label class="check full"><input id="d-available" type="checkbox" checked>Μόνο ταινίες με διαθέσιμη πλατφόρμα στην Ελλάδα</label>
+      </div>
+      <button class="go" type="submit">Βρες ταινίες</button>
+    </form>
+    <p class="hint">Το «οικογενειακή» είναι κινηματογραφικό είδος. Έλεγξε την ηλικιακή καταλληλότητα πριν την προβολή.</p>
+    <div id="d-status" class="status" role="status" aria-live="polite"></div>
+    <div id="d-results" class="results" aria-busy="false"></div>
+    <button id="d-more" class="load-more" type="button" hidden>Έλεγχος περισσότερων ταινιών</button>
   </section>
 
   <section id="view-plat" role="tabpanel" aria-labelledby="tab-plat" hidden style="flex-direction:column;gap:16px">
@@ -203,7 +251,7 @@ function provChip(p, sub){
   const o = typeof p==="string" ? {provider_name:p} : p;
   return `<span class="prov${sub?" sub":""}">${logo(o)}${esc(o.provider_name)}</span>`;
 }
-function card(m, prov, link){
+function card(m, prov, link, mediaKind=kind, localProviders=null){
   let groups = "";
   if(prov){
     for(const [k,label] of GROUPS){
@@ -211,11 +259,12 @@ function card(m, prov, link){
       groups += `<div class="group"><span class="glabel">${label}</span>${list.map(p=>provChip(p,k==="flatrate")).join("")}</div>`;
     }
   }
-  const greek = m.id!=null ? greekFor(kind, m.id) : [];
+  const greek = localProviders ?? (m.id!=null ? greekFor(mediaKind, m.id) : []);
   if(greek.length) groups = `<div class="group"><span class="glabel">Ελληνικές πλατφόρμες</span>${greek.map(greekChip).join("")}</div>` + groups;
-  if(!groups) groups = `<span class="none">${K[kind].none} σε καμία πλατφόρμα στην Ελλάδα αυτή τη στιγμή.</span>`;
+  if(!groups) groups = `<span class="none">${esc(m.availabilityText || `${K[mediaKind].none} σε καμία πλατφόρμα στην Ελλάδα αυτή τη στιγμή.`)}</span>`;
   const more = link ? `<a class="more" href="${esc(link)}" target="_blank" rel="noopener">Όλες οι επιλογές στο JustWatch →</a>` : "";
-  return `<article class="card">${poster(m)}<div class="info"><h2 class="title">${esc(m.title)}<span class="year">${esc(m.year||"")}</span></h2>${trailerBtn(m)}${groups}${more}</div></article>`;
+  const rating = m.ratingLabel ? `<span class="rating">${esc(m.ratingLabel)}</span>` : "";
+  return `<article class="card">${poster(m)}<div class="info"><h2 class="title">${esc(m.title)}<span class="year">${esc(m.year||"")}</span></h2>${rating}${trailerBtn(m,mediaKind)}${groups}${more}</div></article>`;
 }
 async function search(q){
   const k = kind;
@@ -315,8 +364,8 @@ async function pickLocal(pid, name, k){
 function tile(m){return `<div class="tile">${poster(m)}<span class="t">${esc(m.title)}</span><span class="y">${esc(m.year||"")}</span>${trailerBtn(m)}</div>`}
 
 /* ===== Τρέιλερ από YouTube (μέσω TMDB) ===== */
-function trailerBtn(m){
-  return `<button class="trailer" data-k="${kind}" data-id="${m.id??""}" data-title="${esc((m.title||"").replace("Παράδειγμα: ",""))}" data-year="${esc(m.year||"")}">Τρέιλερ</button>`;
+function trailerBtn(m,mediaKind=kind){
+  return `<button class="trailer" data-k="${mediaKind}" data-id="${m.id??""}" data-title="${esc((m.title||"").replace("Παράδειγμα: ",""))}" data-year="${esc(m.year||"")}">Τρέιλερ</button>`;
 }
 function pickTrailer(list){
   const yt = (list||[]).filter(v=>v.site==="YouTube");
@@ -358,11 +407,13 @@ $("#platforms").addEventListener("click",e=>{const b=e.target.closest("button.pr
 let view = "search";
 function show(which){
   view = which;
-  const s = which==="search";
-  $("#tab-search").setAttribute("aria-selected",s); $("#tab-plat").setAttribute("aria-selected",!s);
-  $("#view-search").hidden = !s; $("#view-plat").hidden = s;
-  $("#view-plat").style.display = s ? "" : "flex";
-  if(!s) loadPlatforms();
+  for(const name of ["search","discover","plat"]){
+    $(`#tab-${name}`).setAttribute("aria-selected",name===which);
+    $(`#view-${name}`).hidden = name!==which;
+  }
+  $(".kind").hidden = which==="discover";
+  $("#view-plat").style.display = which==="plat" ? "flex" : "";
+  if(which==="plat") loadPlatforms();
 }
 function setKind(k){
   if(k===kind) return;
@@ -375,11 +426,13 @@ function setKind(k){
   if(view==="plat") loadPlatforms(); else platformsFor = null;
 }
 $("#tab-search").addEventListener("click",()=>show("search"));
+$("#tab-discover").addEventListener("click",()=>show("discover"));
 $("#tab-plat").addEventListener("click",()=>show("plat"));
 $("#k-movie").addEventListener("click",()=>setKind("movie"));
 $("#k-tv").addEventListener("click",()=>setKind("tv"));
 
 search(K.movie.ex);
 </script>
+<script src="discover.js"></script>
 
 </html>
