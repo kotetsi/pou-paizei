@@ -37,7 +37,7 @@ export default {
     const allowOrigin = ALLOWED_ORIGINS.includes("*")
       ? "*"
       : (ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]);
-    const cors = { "Access-Control-Allow-Origin": allowOrigin, "Vary": "Origin" };
+    const cors = { "Access-Control-Allow-Origin": allowOrigin, "Access-Control-Expose-Headers": "X-Cache", "Vary": "Origin" };
 
     if (request.method === "OPTIONS") {
       return new Response(null, { headers: { ...cors, "Access-Control-Allow-Methods": "GET", "Access-Control-Max-Age": "86400" } });

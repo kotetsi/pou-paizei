@@ -89,3 +89,8 @@ test('upstream errors are not remembered in memory', async () => {
   response = await worker.fetch(request('imdb/movie/321'),env,ctx);
   assert.equal((await response.json()).rating,8.1);
 });
+
+test('X-Cache header is exposed to the browser via CORS', async () => {
+  const response = await worker.fetch(request('imdb/movie/555'),env,ctx);
+  assert.equal(response.headers.get('Access-Control-Expose-Headers'),'X-Cache');
+});
