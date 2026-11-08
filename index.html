@@ -133,7 +133,9 @@ const REGION = "GR";
 const LANG = "el-GR";
 const PROXY_URL = "https://pou-paizei-api.ntsiblakos.workers.dev/";   // η διεύθυνση του Cloudflare Worker
 const IMG = "https://image.tmdb.org/t/p/";
-const MAX_PLATFORMS = 24;
+const MAX_PLATFORMS = 40;
+/* Οι μεγάλες πλατφόρμες μπαίνουν πάντα πρώτες, με αυτή τη σειρά */
+const PINNED = ["Netflix","Amazon Prime Video","Disney Plus","HBO Max","Apple TV","MUBI","Cinobo","Crunchyroll"];
 
 /* Λέξεις ανά είδος */
 const K = {
@@ -251,8 +253,10 @@ async function loadPlatforms(){
   let list;
   try{
     const d = await tmdb(`watch/providers/${k}`,{watch_region:REGION,language:LANG});
+    const rank = p => { const i = PINNED.indexOf(p.provider_name); return i>=0 ? i-1000 : (p.display_priorities?.[REGION]??999); };
     list = (d.results||[])
-      .sort((a,b)=>(a.display_priorities?.[REGION]??999)-(b.display_priorities?.[REGION]??999))
+      .filter(p=>!/Amazon Channel|with Ads|Standard with Ads/i.test(p.provider_name))
+      .sort((a,b)=>rank(a)-rank(b))
       .slice(0,MAX_PLATFORMS);
     $("#notice").hidden = true; demoMode = false;
   }catch(e){
@@ -285,7 +289,7 @@ async function pickPlatform(btn){
     const d = await tmdb(`discover/${k}`,{
       watch_region:REGION, with_watch_providers:btn.dataset.id,
       with_watch_monetization_types:"flatrate|free|ads",
-      sort_by:"popularity.desc", language:LANG, page:1
+      sort_by:"popularity.desc", "vote_count.gte": k==="movie" ? 200 : 100, language:LANG, page:1
     });
     if(k!==kind) return;
     const items = (d.results||[]).map(norm);
