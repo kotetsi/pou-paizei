@@ -11,7 +11,9 @@ beforeEach(async () => {
   calls = []; stored = new Map(); pending = [];
   global.caches = {default:{async match(key){return stored.get(key.url)?.clone();}, async put(key,res){stored.set(key.url,res);}}};
   const source = fs.readFileSync(require.resolve('../worker.js'),'utf8');
-  worker = (await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'))).default;
+  // Κάθε τεστ φορτώνει καινούργιο Worker, ώστε η μνήμη του να μη μεταφέρεται από τεστ σε τεστ.
+  const fresh = source + '\n// ' + Math.random();
+  worker = (await import('data:text/javascript;base64,'+Buffer.from(fresh).toString('base64'))).default;
   global.fetch = async (url, options) => {
     calls.push({url:String(url),options});
     return String(url).includes('themoviedb') ? json({imdb_id:'tt1234567'}) : json({Response:'True',imdbID:'tt1234567',imdbRating:'7.8'});
@@ -65,4 +67,25 @@ test('old TMDB paths, method restrictions and path allowlist still work', async 
   assert.equal(response.status,400);
   response = await worker.fetch(new Request('https://worker.example',{method:'POST'}),env,ctx);
   assert.equal(response.status,405);
+});
+
+test('in-memory cache answers repeat requests even when the Cloudflare cache is empty', async () => {
+  let response = await worker.fetch(request('imdb/movie/789'),env,ctx);
+  assert.equal(response.headers.get('X-Cache'),'MISS');
+  await Promise.all(pending);
+  stored.clear();
+  const before = calls.length;
+  response = await worker.fetch(request('imdb/movie/789'),env,ctx);
+  assert.equal(response.headers.get('X-Cache'),'MEMORY');
+  assert.equal((await response.json()).rating,7.8);
+  assert.equal(calls.length,before);
+});
+
+test('upstream errors are not remembered in memory', async () => {
+  global.fetch = async url => String(url).includes('themoviedb') ? json({imdb_id:'tt1234567'}) : json({Response:'False',Error:'Invalid API key!'});
+  let response = await worker.fetch(request('imdb/movie/321'),env,ctx);
+  assert.equal(response.status,502);
+  global.fetch = async url => String(url).includes('themoviedb') ? json({imdb_id:'tt1234567'}) : json({Response:'True',imdbID:'tt1234567',imdbRating:'8.1'});
+  response = await worker.fetch(request('imdb/movie/321'),env,ctx);
+  assert.equal((await response.json()).rating,8.1);
 });

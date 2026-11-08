@@ -13,6 +13,23 @@ const ALLOWED_PATHS = /^((search|discover)\/(movie|tv)|(movie|tv)\/\d+(\/watch\/
 // Πόση ώρα κρατάμε τα αποτελέσματα στο cache (12 ώρες)
 const CACHE_SECONDS = 43200;
 
+// Οι βαθμολογίες IMDb αλλάζουν αργά: τις κρατάμε 7 ημέρες, για να μένουμε μέσα στο όριο του OMDb.
+const IMDB_CACHE_SECONDS = 604800;
+
+// Μνήμη μέσα στον Worker, επιπλέον του cache του Cloudflare (που δεν λειτουργεί πλήρως στο workers.dev).
+const memory = new Map();
+const MEMORY_MAX = 2000;
+function remember(key, value) {
+  if (memory.size >= MEMORY_MAX) memory.delete(memory.keys().next().value);
+  memory.set(key, { value, expires: Date.now() + IMDB_CACHE_SECONDS * 1000 });
+}
+function recall(key) {
+  const hit = memory.get(key);
+  if (!hit) return null;
+  if (hit.expires < Date.now()) { memory.delete(key); return null; }
+  return hit.value;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -65,10 +82,13 @@ async function imdbRating(movieId, env, ctx, cors, origin) {
   // Το κλειδί OMDb δεν επιστρέφεται στον browser και δεν μπαίνει στο cache key.
   const cache = caches.default;
   const cacheKey = new Request(`${origin}/cache/imdb-v1/movie/${movieId}`);
+  const inMemory = recall(movieId);
+  if (inMemory) return json(inMemory,200,{...cors,"X-Cache":"MEMORY"});
   const cached = await cache.match(cacheKey);
   if (cached) {
     const out = new Response(cached.body,cached);
     for (const [key,value] of Object.entries(cors)) out.headers.set(key,value);
+    out.headers.set("X-Cache","HIT");
     return out;
   }
   try {
@@ -99,11 +119,13 @@ async function imdbRating(movieId, env, ctx, cors, origin) {
       }
     }
     const body = {source:"IMDb",imdb_id:imdbId || null,rating};
+    remember(movieId, body);
     // Cache only data; attach CORS to each response for its current origin.
-    const response = json(body,200,{"Cache-Control":`public, max-age=${CACHE_SECONDS}`});
+    const response = json(body,200,{"Cache-Control":`public, max-age=${IMDB_CACHE_SECONDS}`});
     ctx.waitUntil(cache.put(cacheKey,response.clone()));
     const out = new Response(response.body,response);
     for (const [key,value] of Object.entries(cors)) out.headers.set(key,value);
+    out.headers.set("X-Cache","MISS");
     return out;
   } catch {
     return json({error:"Δεν φορτώθηκε η βαθμολογία IMDb"},502,cors);

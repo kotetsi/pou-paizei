@@ -22,7 +22,11 @@
     if (filters.from !== null) params["primary_release_date.gte"] = `${filters.from}-01-01`;
     if (filters.to !== null) params["primary_release_date.lte"] = `${filters.to}-12-31`;
     // IMDb και TMDB έχουν διαφορετικά εκλογικά σώματα: όχι προφίλτρο TMDB για IMDb.
-    if (filters.source === "tmdb") params["vote_average.gte"] = filters.rating;
+    if (filters.source === "tmdb") {
+      params["vote_average.gte"] = filters.rating;
+      // Χωρίς ελάχιστο αριθμό ψήφων, μια ταινία με 2 ψήφους και μέσο όρο 10 θα περνούσε το φίλτρο.
+      params["vote_count.gte"] = 50;
+    }
     return params;
   }
 

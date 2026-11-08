@@ -42,3 +42,10 @@ test('availability respects rent, subscription, free and Greek platform access t
   assert.deepEqual(free.greek.map(p => p.name),['ERTFLIX']);
   assert.equal(availability(null,[locals[0]],'stream').available,true);
 });
+
+test('TMDB source requires a minimum vote count; IMDb source does not', () => {
+  const {filtersFrom,discoverParams} = require('../discover.js');
+  const base = {genre:'',from:'',to:'',rating:'7,5',access:'all',available:true};
+  assert.equal(discoverParams(filtersFrom({...base,source:'tmdb'}),1)['vote_count.gte'],50);
+  assert.equal(discoverParams(filtersFrom({...base,source:'imdb'}),1)['vote_count.gte'],undefined);
+});
