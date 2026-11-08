@@ -102,7 +102,7 @@ async function imdbRating(movieId, env, ctx, cors, origin) {
     if (imdbId) {
       if (!/^tt\d+$/.test(imdbId)) return json({error:"Μη έγκυρο αναγνωριστικό IMDb"},502,cors);
       const omdbUrl = new URL("https://www.omdbapi.com/");
-      omdbUrl.search = new URLSearchParams({apikey:env.OMDB_API_KEY,i:imdbId,r:"json"});
+      omdbUrl.search = new URLSearchParams({apikey:env.OMDB_API_KEY,i:imdbId,r:"json"}).toString();
       const upstream = await fetch(omdbUrl.toString(),{headers:{Accept:"application/json"}});
       if (!upstream.ok) return json({error:"Το OMDb δεν απάντησε"},502,cors);
       const data = await upstream.json();
